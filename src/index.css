@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===============================
+   Solapur Gati – Design System
+   =============================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap");
+
+@layer base {
+  :root {
+    /* ===== Core Colors ===== */
+    --primary: 243 75% 58%;
+    --primary-foreground: 225 100% 96%;
+
+    --secondary: 0 0% 32%;
+    --secondary-foreground: 0 0% 98%;
+
+    --background: 0 0% 96%;
+    --foreground: 0 0% 9%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 9%;
+
+    --muted: 0 0% 88%;
+    --muted-foreground: 0 0% 35%;
+
+    --border: 0 0% 83%;
+    --input: 0 0% 83%;
+    --ring: 243 75% 58%;
+
+    --success: 160 84% 39%;
+    --warning: 38 92% 50%;
+    --destructive: 0 72% 50%;
+
+    /* ===== Sidebar (FIXED VISIBILITY) ===== */
+    --sidebar-background: 217 71% 17%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-accent: 217 45% 28%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 35% 32%;
+    --sidebar-ring: 243 75% 58%;
+
+    /* ===== Fonts ===== */
+    --font-sans: "Lato", system-ui, sans-serif;
+    --font-serif: "EB Garamond", serif;
+    --font-mono: "Fira Code", monospace;
+
+    --radius: 1rem;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  * {
+    @apply border-border;
+  }
+}
+
+/* ===============================
+   Components
+   =============================== */
+@layer components {
+  .gov-card {
+    @apply bg-card border border-border rounded-lg shadow-sm;
+  }
+
+  .btn-gov-primary {
+    @apply bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium hover:bg-primary/90 transition;
+  }
+
+  .btn-gov-secondary {
+    @apply bg-secondary text-secondary-foreground px-4 py-2 rounded-md font-medium hover:bg-secondary/80 transition;
+  }
+
+  /* ===== Sidebar Navigation ===== */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-md
+           text-sidebar-foreground/80
+           hover:bg-sidebar-accent
+           hover:text-sidebar-foreground
+           transition-colors;
+  }
+
+  .nav-item-active {
+    @apply bg-sidebar-accent text-sidebar-foreground font-medium;
+  }
+}
+
+/* ===============================
+   Utilities
+   =============================== */
+@layer utilities {
+  .text-success {
+    color: hsl(var(--success));
+  }
+
+  .text-warning {
+    color: hsl(var(--warning));
+  }
+
+  .bg-sidebar {
+    background-color: hsl(var(--sidebar-background));
+  }
+}
