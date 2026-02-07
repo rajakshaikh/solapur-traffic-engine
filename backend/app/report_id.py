@@ -1,9 +1,11 @@
-import random
+"""
+Report ID generation: SLP-YYYY-XXXX (e.g. SLP-2026-00421).
+Atomic increment is done in crud.get_next_report_id() using report_id_counter table.
+"""
+
 from datetime import datetime
 
 
-def generate_report_id() -> str:
-    """Generate unique report ID: SLP-YYYY-NNNNN (e.g. SLP-2026-24059)"""
-    year = datetime.utcnow().year
-    num = random.randint(10000, 99999)
-    return f"SLP-{year}-{num}"
+def report_id_format(year: int, num: int) -> str:
+    """Format as SLP-YYYY-XXXX (4-digit zero-padded)."""
+    return f"SLP-{year}-{num:04d}"

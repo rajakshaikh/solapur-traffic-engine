@@ -1,21 +1,49 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from datetime import datetime, timezone
 from . import models, schemas
-from .report_id import generate_report_id
+from .database import engine
+from .report_id import report_id_format
 import uuid
 
 
-def _ensure_unique_report_id(db: Session) -> str:
-    while True:
-        rid = generate_report_id()
-        if db.query(models.Report).filter(models.Report.report_id == rid).first() is None:
-            return rid
-    return generate_report_id()
+def get_next_report_id(db: Session) -> str:
+    """
+    Atomically get next report ID in format SLP-YYYY-XXXX.
+    Uses report_id_counter table for safe increment.
+    """
+    year = datetime.now(timezone.utc).year
+    is_sqlite = engine.url.get_backend_name() == "sqlite"
+    if is_sqlite:
+        db.execute(
+            text(
+                "INSERT INTO report_id_counter (year, next_num) VALUES (:y, 1) "
+                "ON CONFLICT(year) DO UPDATE SET next_num = next_num + 1"
+            ),
+            {"y": year},
+        )
+    else:
+        db.execute(
+            text(
+                "INSERT INTO report_id_counter (year, next_num) VALUES (:y, 1) "
+                "ON CONFLICT(year) DO UPDATE SET next_num = report_id_counter.next_num + 1"
+            ),
+            {"y": year},
+        )
+    row = db.execute(
+        text("SELECT next_num FROM report_id_counter WHERE year = :y"),
+        {"y": year},
+    ).fetchone()
+    num = row[0] if row else 1
+    return report_id_format(year, num)
 
 
-def create_report(db: Session, data: schemas.ReportCreate) -> models.Report:
+def create_report(
+    db: Session, data: schemas.ReportCreate, report_id: str | None = None
+) -> models.Report:
     pk = str(uuid.uuid4())
-    report_id = _ensure_unique_report_id(db)
+    if report_id is None:
+        report_id = get_next_report_id(db)
     r = models.Report(
         id=pk,
         report_id=report_id,
@@ -71,9 +99,9 @@ def update_report_status(
         return None
     now = datetime.now(timezone.utc)
     r.status = new_status
-    if new_status == models.ReportStatus.APPROVED and r.approved_at is None:
+    if new_status in (models.ReportStatus.ACTION_PLANNED, models.ReportStatus.APPROVED) and r.approved_at is None:
         r.approved_at = now
-    if new_status == models.ReportStatus.CLOSED or new_status == models.ReportStatus.IGNORED:
+    if new_status in (models.ReportStatus.CLOSED, models.ReportStatus.IGNORED):
         r.closed_at = now
     db.commit()
     db.refresh(r)

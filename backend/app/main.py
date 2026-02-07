@@ -41,6 +41,11 @@ def _run_simple_migrations() -> None:
         if "photo_verification_status" not in existing:
             conn.execute(text("ALTER TABLE reports ADD COLUMN photo_verification_status VARCHAR(50);"))
         conn.commit()
+        # Ensure report_id_counter exists for atomic SLP-YYYY-XXXX generation
+        conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS report_id_counter (year INTEGER PRIMARY KEY, next_num INTEGER NOT NULL DEFAULT 1);"
+        ))
+        conn.commit()
 
 
 @app.on_event("startup")

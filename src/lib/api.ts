@@ -32,9 +32,10 @@ export type IssueType = "parking" | "hawker" | "blocked" | "signal";
 export type ReportStatus =
   | "RECEIVED"
   | "UNDER_REVIEW"
+  | "ACTION_PLANNED"
+  | "CLOSED"
   | "APPROVED"
-  | "IGNORED"
-  | "CLOSED";
+  | "IGNORED";
 
 export interface Report {
   id: string;
@@ -104,6 +105,16 @@ export async function searchReports(params: {
   return r.json();
 }
 
+/** List all reports (for SMC Dashboard). Sorted by latest first. */
+export async function getAllReports(): Promise<Report[]> {
+  const r = await apiFetch(`${API_BASE}/api/reports`);
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || "Failed to fetch reports");
+  }
+  return r.json();
+}
+
 export async function getReport(reportId: string): Promise<Report> {
   const r = await apiFetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}`);
   if (!r.ok) {
@@ -114,12 +125,31 @@ export async function getReport(reportId: string): Promise<Report> {
   return r.json();
 }
 
+/** Update report status (SMC Dashboard). Uses PATCH /reports/{report_id}. */
+export async function updateReportStatus(
+  reportId: string,
+  status: ReportStatus
+): Promise<Report> {
+  const r = await apiFetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  if (!r.ok) {
+    if (r.status === 404) throw new Error("Report not found");
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || "Failed to update status");
+  }
+  return r.json();
+}
+
 export const reportStatusLabels: Record<ReportStatus, string> = {
   RECEIVED: "Received",
   UNDER_REVIEW: "Under Review",
-  APPROVED: "Approved",
-  IGNORED: "Ignored",
+  ACTION_PLANNED: "Action Planned",
   CLOSED: "Closed",
+  APPROVED: "Action Planned",
+  IGNORED: "Closed",
 };
 
 export interface PhotoVerificationReport {

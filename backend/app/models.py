@@ -1,7 +1,14 @@
-from sqlalchemy import Column, String, DateTime, Enum as SQLEnum, Text, Float
+from sqlalchemy import Column, String, DateTime, Enum as SQLEnum, Text, Float, Integer
 from sqlalchemy.sql import func
 from .database import Base
 import enum
+
+
+class ReportIdCounter(Base):
+    """Atomic counter for SLP-YYYY-XXXX report IDs (one row per year)."""
+    __tablename__ = "report_id_counter"
+    year = Column(Integer, primary_key=True)
+    next_num = Column(Integer, nullable=False, default=1)
 
 
 class IssueType(str, enum.Enum):
@@ -14,9 +21,11 @@ class IssueType(str, enum.Enum):
 class ReportStatus(str, enum.Enum):
     RECEIVED = "RECEIVED"
     UNDER_REVIEW = "UNDER_REVIEW"
+    ACTION_PLANNED = "ACTION_PLANNED"
+    CLOSED = "CLOSED"
+    # Legacy; map to ACTION_PLANNED/CLOSED in UI if needed
     APPROVED = "APPROVED"
     IGNORED = "IGNORED"
-    CLOSED = "CLOSED"
 
 
 class PhotoVerificationStatus(str, enum.Enum):
