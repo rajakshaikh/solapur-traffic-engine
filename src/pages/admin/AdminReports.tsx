@@ -15,6 +15,7 @@ import {
   adminListReports,
   adminUpdateReportStatus,
   reportStatusLabels,
+  getFullImageUrl,
   type Report,
   type ReportStatus,
   type IssueType,
@@ -239,9 +240,9 @@ export default function AdminReports() {
                       <TableCell className="text-sm">{formatDate(report.approved_at)}</TableCell>
                       <TableCell className="text-sm">{formatDate(report.closed_at)}</TableCell>
                       <TableCell>
-                        {report.image_url ? (
+                        {getFullImageUrl(report.image_url) ? (
                           <a
-                            href={report.image_url}
+                            href={getFullImageUrl(report.image_url)!}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary text-sm hover:underline"

@@ -12,7 +12,13 @@ import {
   TrafficCone,
   Calendar,
 } from "lucide-react";
-import { searchReports, reportStatusLabels, type Report, type ReportStatus } from "@/lib/api";
+import {
+  searchReports,
+  reportStatusLabels,
+  getFullImageUrl,
+  type Report,
+  type ReportStatus,
+} from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -229,10 +235,10 @@ export default function CitizenMyReports() {
                       </div>
                     )}
 
-                    {report.image_url && (
+                    {getFullImageUrl(report.image_url) && (
                       <div className="mt-4 pt-4 border-t border-border">
                         <a
-                          href={report.image_url}
+                          href={getFullImageUrl(report.image_url)!}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm text-primary hover:underline"

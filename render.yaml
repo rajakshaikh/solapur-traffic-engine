@@ -1,0 +1,22 @@
+# Render Blueprint - Deploy backend to Render
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: solapur-traffic-backend
+    runtime: python
+    region: singapore
+
+    # Backend lives in backend/ subdirectory
+    rootDir: backend
+
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.2"
+      # Optional: Add PostgreSQL for persistent data (Render free tier uses ephemeral disk)
+      # - key: DATABASE_URL
+      #   fromDatabase:
+      #     name: solapur-db
+      #     property: connectionString

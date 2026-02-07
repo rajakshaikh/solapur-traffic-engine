@@ -1,5 +1,31 @@
-// Backend API base URL (fixed for local demo on port 8001)
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+// Backend API base URL - use VITE_API_BASE_URL in production (Render), fallback for local dev
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:8001";
+
+/** Convert relative image URLs to absolute (needed when frontend and backend are on different hosts) */
+export function getFullImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const base = API_BASE.replace(/\/$/, "");
+  return url.startsWith("/") ? `${base}${url}` : `${base}/${url}`;
+}
+
+/** Wrap fetch to handle network errors (Failed to fetch, CORS, etc.) with a clear message */
+async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (err) {
+    const msg =
+      err instanceof TypeError && err.message?.toLowerCase().includes("fetch")
+        ? "Unable to connect to the server. Please ensure the backend is running and try again."
+        : err instanceof Error
+          ? err.message
+          : "Network error. Please try again.";
+    throw new Error(msg);
+  }
+}
 
 
 export type IssueType = "parking" | "hawker" | "blocked" | "signal";
@@ -47,7 +73,7 @@ export async function createReport(body: {
   if (body.location_text) form.append("location", body.location_text);
   if (body.photoFile) form.append("photo", body.photoFile);
 
-  const r = await fetch(`${API_BASE}/api/reports`, {
+  const r = await apiFetch(`${API_BASE}/api/reports`, {
     method: "POST",
     body: form,
   });
@@ -70,7 +96,7 @@ export async function searchReports(params: {
   if (params.phone) sp.set("phone", params.phone);
   const q = sp.toString();
   if (!q) throw new Error("Provide report_id or phone");
-  const r = await fetch(`${API_BASE}/api/reports/search?${q}`);
+  const r = await apiFetch(`${API_BASE}/api/reports/search?${q}`);
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
     throw new Error((err as { detail?: string }).detail || "Search failed");
@@ -79,7 +105,7 @@ export async function searchReports(params: {
 }
 
 export async function getReport(reportId: string): Promise<Report> {
-  const r = await fetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}`);
+  const r = await apiFetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}`);
   if (!r.ok) {
     if (r.status === 404) throw new Error("Report not found");
     const err = await r.json().catch(() => ({}));
@@ -106,7 +132,7 @@ export interface PhotoVerificationReport {
 }
 
 export async function listPhotoReports(): Promise<PhotoVerificationReport[]> {
-  const r = await fetch(`${API_BASE}/api/reports/photos`);
+  const r = await apiFetch(`${API_BASE}/api/reports/photos`);
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
     throw new Error((err as { detail?: string }).detail || "Failed to fetch photo reports");
@@ -118,7 +144,7 @@ export async function updatePhotoVerificationStatus(
   reportId: string,
   status: "Valid" | "Unclear" | "Possibly Fake"
 ): Promise<Report> {
-  const r = await fetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}/photo-status`, {
+  const r = await apiFetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}/photo-status`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ photo_status: status }),
@@ -161,7 +187,7 @@ export async function adminListReports(params: {
   if (params.issue_type) sp.set("issue_type", params.issue_type);
   if (params.skip != null) sp.set("skip", String(params.skip));
   if (params.limit != null) sp.set("limit", String(params.limit));
-  const r = await fetch(`${API_BASE}/api/admin/reports?${sp}`, { headers: adminHeaders() });
+  const r = await apiFetch(`${API_BASE}/api/admin/reports?${sp}`, { headers: adminHeaders() });
   if (r.status === 401) throw new Error("Unauthorized");
   if (!r.ok) throw new Error("Failed to fetch reports");
   return r.json();
@@ -171,7 +197,7 @@ export async function adminUpdateReportStatus(
   reportId: string,
   status: ReportStatus
 ): Promise<Report> {
-  const r = await fetch(`${API_BASE}/api/admin/reports/${encodeURIComponent(reportId)}/status`, {
+  const r = await apiFetch(`${API_BASE}/api/admin/reports/${encodeURIComponent(reportId)}/status`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...adminHeaders() },
     body: JSON.stringify({ status }),
