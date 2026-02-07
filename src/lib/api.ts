@@ -1,5 +1,6 @@
 // Backend API base URL (fixed for local demo on port 8001)
-const API_BASE = "http://localhost:8001";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
 
 export type IssueType = "parking" | "hawker" | "blocked" | "signal";
 export type ReportStatus =
